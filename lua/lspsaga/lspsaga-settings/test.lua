@@ -1,0 +1,15 @@
+local log = require('lspsaga.lspsaga-settings.vlog')
+log.new({ level = "debug" }, true)
+
+
+local Settings = require('custom.config.lspsaga-settings')
+log.debug("lspsaga-settings test: Settings class created")
+local a = Settings:new("lspsaga")
+log.debug("lspsaga-settings test: save clangd settings")
+a:save_settings({ cpp_client = 'clangd', default = true })
+log.debug("lspsaga-settings test: get_settings")
+log.debug(a:get_settings())
+log.debug("lspsaga-settings test: save ccls settings")
+a:save_settings({ cpp_client = 'ccls' })
+log.debug("lspsaga-settings test: get_settings")
+log.debug(a:get_settings())

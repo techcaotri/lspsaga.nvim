@@ -14,6 +14,13 @@ local ns = api.nvim_create_namespace('SagaCallhierarchy')
 local ch = {}
 ch.__index = ch
 
+local log = require('lspsaga.lspsaga-settings.vlog')
+log.new({ level = "warn" }, true)
+local settings = require('lspsaga.lspsaga-settings')
+settings:new("lspsaga")
+
+log.debug(vim.inspect(settings))
+
 function ch.__newindex(t, k, v)
   rawset(t, k, v)
 end
@@ -25,9 +32,9 @@ function ch:clean()
       api.nvim_buf_delete(node.value.bufnr, { force = true })
       return
     end
-    if node.value.bufnr and api.nvim_buf_is_valid(node.value.bufnr) and node.value.rendered then
-      api.nvim_buf_del_keymap(node.value.bufnr, 'n', config.finder.keys.close)
-    end
+    -- if node.value.bufnr and api.nvim_buf_is_valid(node.value.bufnr) and node.value.rendered then
+    --   api.nvim_buf_del_keymap(node.value.bufnr, 'n', config.finder.keys.close)
+    -- end
   end)
 
   for key, _ in pairs(self) do
@@ -325,18 +332,18 @@ function ch:call_hierarchy(item, client, timer, curlnum)
     if not self.left_winid or not api.nvim_win_is_valid(self.left_winid) then
       local height = bit.rshift(vim.o.lines, 1) - 4
       self.left_bufnr, self.left_winid, self.right_bufnr, self.right_winid = ly:new(self.layout)
-        :left(height, 20)
-        :bufopt({
-          ['filetype'] = 'sagacallhierarchy',
-          ['buftype'] = 'nofile',
-          ['bufhidden'] = 'wipe',
-        })
-        :right()
-        :bufopt({
-          ['buftype'] = 'nofile',
-          ['bufhidden'] = 'wipe',
-        })
-        :done()
+          :left(height, 20)
+          :bufopt({
+            ['filetype'] = 'sagacallhierarchy',
+            ['buftype'] = 'nofile',
+            ['bufhidden'] = 'wipe',
+          })
+          :right()
+          :bufopt({
+            ['buftype'] = 'nofile',
+            ['bufhidden'] = 'wipe',
+          })
+          :done()
       self:peek_view()
       self:keymap()
     end
@@ -387,6 +394,21 @@ function ch:call_hierarchy(item, client, timer, curlnum)
   end)
 end
 
+function get_default_client_settings()
+  local lspsaga_settings = settings:get_settings()
+  if lspsaga_settings == nil then
+    log.debug('lspsaga_settings is nil')
+    return nil
+  end
+
+  return lspsaga_settings["default_client"]
+end
+
+function save_default_client_settings(client)
+  log.debug('save_default_client_settings() called with client: ' .. client)
+  settings:save_settings({ default_client = client })
+end
+
 function ch:send_prepare_call()
   if self.pending_request then
     vim.notify('there is already a request please wait.')
@@ -406,12 +428,46 @@ function ch:send_prepare_call()
       return item.name
     end, clients)
 
-    local choice = vim.fn.inputlist('select client:', unpack(client_name))
-    if choice == 0 or choice > #clients then
-      api.nvim_err_writeln('[Lspsaga] wrong choice for select client')
-      return
+    -- vim.notify('[lspsaga.nvim]' .. vim.inspect(client_name))
+    -- log.debug(vim.inspect(client_name))
+    -- log.debug('clients: ' .. vim.inspect(clients))
+    local default_client_name = get_default_client_settings()
+    log.debug('default_client_name: ' .. (default_client_name or "nil"))
+    local default_client
+    if default_client_name ~= nil then
+      local default_clients = vim.tbl_filter(function(item)
+        log.debug('vim.tbl_filter: item.name=' .. item.name)
+        return item.name == default_client_name
+      end, clients)
+
+      if default_clients ~= nil then
+        log.debug('default_clients is not nil')
+        default_client = default_clients[0] or default_clients[1]
+        log.debug('default_client is in clients list -> just keep it: default_client= ' .. default_client.name)
+      else
+        log.debug('default_client is not in the clients list -> assign nil to ask user to select again')
+        default_client = nil
+      end
+    else
+      log.debug('default_client is nil')
     end
-    client = clients[choice]
+    if (default_client == nil) then
+      local choice = vim.fn.inputlist({ 'select client:', unpack(client_name) })
+      if choice == 0 or choice > #clients then
+        api.nvim_err_writeln('[Lspsaga] wrong choice for select client')
+        return
+      end
+      client = clients[choice]
+
+      -- Ask the user whether to save it as the default value
+      local input = vim.fn.input('Save as default client? [y/n] ')
+      if string.lower(input) == 'y' then
+        save_default_client_settings(client.name)
+      end
+    else
+      log.debug('default_client is not nil -> use it')
+      client = default_client
+    end
   end
   self.list = slist.new()
 
