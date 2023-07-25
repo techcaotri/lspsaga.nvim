@@ -197,7 +197,7 @@ function M.res_isempty(results)
 end
 
 function M.nvim_ten()
-  return vim.version().minor >= 10
+  return vim.version().minor >= 11
 end
 
 return M
