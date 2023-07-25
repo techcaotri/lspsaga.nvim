@@ -33,7 +33,7 @@ local ns = api.nvim_create_namespace('SagaFinder')
 function fd:init_layout()
   local win_width = api.nvim_win_get_width(0)
   if config.finder.right_width > 0.6 then
-    vim.notify('[lspsaga] finder right width must less than 0.7')
+    vim.notify('[lspsaga] finder right width must be less than 0.7')
     config.finder.right_width = 0.5
   end
   self.lbufnr, self.lwinid, _, self.rwinid = ly:new(self.layout)
@@ -102,7 +102,7 @@ function fd:handler(method, results, spin_close, done)
   if not results or util.res_isempty(results) then
     spin_close()
     if not config.finder.silent then
-      vim.notify(('[Lspsaga] no response of %s'):format(method), vim.log.levels.WARN)
+      vim.notify(('[lspsaga] no response of %s'):format(method), vim.log.levels.WARN)
     end
     return
   end
@@ -397,11 +397,15 @@ function fd:apply_maps()
         if not client then
           return
         end
+        local range = curnode.value.range
+          or curnode.value.targetSelectionRange
+          or curnode.value.selectionRange
+
         local pos = {
-          curnode.value.range.start.line + 1,
+          range.start.line + 1,
           lsp.util._get_line_byte_from_position(
             curnode.value.bufnr,
-            curnode.value.range.start,
+            range.start,
             client.offset_encoding
           ),
         }
@@ -458,6 +462,9 @@ end
 function fd:new(args)
   local meth, layout, inexist = box.parse_argument(args)
   self.inexist = inexist
+  if not self.inexist then
+    self.inexist = config.finder.sp_inexist
+  end
   self.layout = layout or config.finder.layout
   if #meth == 0 then
     meth = vim.split(config.finder.default, '+', { plain = true })
@@ -471,7 +478,7 @@ function fd:new(args)
   self.ft = vim.bo[curbuf].filetype
   if #methods == 0 then
     vim.notify(
-      ('[Lspsaga] all server of %s buffer does not these methods %s'):format(
+      ('[lspsaga] no servers of buffer %s makes these methods available %s'):format(
         curbuf,
         table.concat(args, ' ')
       ),

@@ -46,7 +46,7 @@ function M.filter(method, results)
   end
   local fn = config.finder.filter[method]
   if type(fn) ~= 'function' then
-    vim.notify('[Lspsaga] filter must be function', vim.log.levels.ERROR)
+    vim.notify('[lspsaga] filter must be a function', vim.log.levels.ERROR)
     return
   end
   local retval = {}
@@ -192,8 +192,9 @@ function M.indent(ns, lbufnr, lwinid)
 
       for i = 1, total, 2 do
         local hi = 'SagaIndent' .. row .. (i - 1)
-        local virt = (row == currow and inlevel == 6) and config.ui.lines[2] or config.ui.lines[3]
-        local vit = api.nvim_buf_set_extmark(bufnr, ns, row, i - 1, {
+        local virt = (row == currow and inlevel == 6 and i - 1 == 4) and config.ui.lines[2]
+          or config.ui.lines[3]
+        api.nvim_buf_set_extmark(bufnr, ns, row, i - 1, {
           virt_text = { { virt, hi } },
           virt_text_pos = 'overlay',
           ephemeral = true,
