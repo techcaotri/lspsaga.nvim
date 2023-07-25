@@ -1,5 +1,5 @@
 local log = require('lspsaga.lspsaga-settings.vlog')
-log.new({ level = "debug" }, true)
+log.new({ plugin = "lspsaga-vlog.nvim", level = "debug" }, true)
 
 
 local Settings = require('custom.config.lspsaga-settings')

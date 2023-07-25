@@ -6,7 +6,7 @@ local M = {
 }
 
 local log = require('lspsaga.lspsaga-settings.vlog')
-log.new({ level = "warn" }, true)
+log.new({ plugin = "lspsaga-vlog.nvim", level = "warn" }, true)
 
 function M:new(setting_name)
   assert(setting_name, "A unique setting name should be passed to the class")

@@ -1,7 +1,7 @@
 local M = {}
 
 local log = require('lspsaga.lspsaga-settings.vlog')
-log.new({ level = "warn" }, true)
+log.new({ plugin = "lspsaga-vlog.nvim", level = "warn" }, true)
 
 function tableToJsonStr(inputTable)
   -- get simple json string

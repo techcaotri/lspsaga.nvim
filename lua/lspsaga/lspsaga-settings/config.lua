@@ -2,7 +2,7 @@ local config_dir = vim.call("stdpath", "config")
 local success, error = pcall(get_config_dir)
 
 local log = require('lspsaga.lspsaga-settings.vlog')
-log.new({ level = "warn" }, true)
+log.new({ plugin = "lspsaga-vlog.nvim", level = "warn" }, true)
 
 if not success then
   log.debug("Error there's no get_config_dir(): " .. error)
