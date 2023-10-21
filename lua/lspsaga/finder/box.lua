@@ -1,5 +1,4 @@
 local vfn = vim.fn
-local treesitter = vim.treesitter
 local M = {}
 ---@diagnostic disable-next-line: deprecated
 local api, uv = vim.api, vim.version().minor >= 10 and vim.uv or vim.loop
@@ -51,12 +50,7 @@ function M.filter(method, results)
   end
   local retval = {}
   for client_id, item in pairs(results) do
-    retval[client_id] = {}
-    for _, val in ipairs(item) do
-      if fn(val) then
-        retval[client_id][#retval[client_id] + 1] = val
-      end
-    end
+    retval[client_id] = { result = fn(item.result) }
   end
   return retval
 end
@@ -186,9 +180,7 @@ function M.indent(ns, lbufnr, lwinid)
       if bufnr ~= lbufnr or winid ~= lwinid or inlevel == 2 then
         return
       end
-
       local total = inlevel == 4 and 4 - 2 or inlevel - 1
-      local conf = to_normal_bg()
 
       for i = 1, total, 2 do
         local hi = 'SagaIndent' .. row .. (i - 1)

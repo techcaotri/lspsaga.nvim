@@ -75,6 +75,13 @@ local function stl_escape(str)
   return str:gsub('%%', '')
 end
 
+-- pylsp
+local function has_container(node, elements)
+  local bar = bar_prefix()
+  local type, icon = kind[5][1], kind[5][2]
+  elements[#elements + 1] = string.format('%s%s#%s%s', bar.prefix, type, icon, node.containerName)
+end
+
 local function insert_elements(buf, node, elements)
   if config.hide_keyword and symbol:node_is_keyword(buf, node) then
     return
@@ -86,19 +93,25 @@ local function insert_elements(buf, node, elements)
     node.name = stl_escape(node.name)
   end
 
+  if node.containerName then
+    has_container(node, elements)
+  end
+
   if config.color_mode then
-    local node_context = bar.prefix .. type .. '#' .. icon .. node.name
+    local node_context = string.format('%s%s#%s%s', bar.prefix, type, icon, node.name)
     elements[#elements + 1] = node_context
   else
-    local node_context = bar.prefix
-      .. type
-      .. '#'
-      .. icon
-      .. bar.prefix
-      .. 'Word'
-      .. '#'
-      .. node.name
-    elements[#elements + 1] = node_context
+    elements[#elements + 1] = string.format(
+      '%s%s#%s%sWord#%s',
+      bar.prefix,
+      type,
+      '#',
+      icon,
+      bar.prefix,
+      'Word',
+      '#',
+      node.name
+    )
   end
 end
 
@@ -190,7 +203,20 @@ local function file_bar(buf)
   end
 end
 
+local function ignored(bufname)
+  for _, pattern in ipairs(util.as_table(config.ignore_patterns)) do
+    if bufname:find(pattern) then
+      return true
+    end
+  end
+  return false
+end
+
 local function init_winbar(buf)
+  if vim.o.diff or config.ignore_patterns and ignored(api.nvim_buf_get_name(buf)) then
+    return
+  end
+  file_bar(buf)
   api.nvim_create_autocmd('User', {
     pattern = 'SagaSymbolUpdate',
     callback = function(opt)
@@ -231,8 +257,23 @@ local function get_bar()
   end
 end
 
+local function toggle()
+  local curbuf = api.nvim_get_current_buf()
+  local ok, g = pcall(api.nvim_get_autocmds, {
+    group = 'SagaWinbar' .. curbuf,
+    event = { 'CursorMoved' },
+    buffer = curbuf,
+  })
+  if ok then
+    vim.opt_local.winbar = ''
+    api.nvim_del_augroup_by_id(g[1].group)
+    return
+  end
+  init_winbar(curbuf)
+end
+
 return {
   init_winbar = init_winbar,
-  file_bar = file_bar,
   get_bar = get_bar,
+  toggle = toggle,
 }

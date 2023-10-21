@@ -45,6 +45,7 @@ local default_config = {
     num_shortcut = true,
     show_server_name = false,
     extend_gitsigns = false,
+    only_in_cursor = true,
     max_height = 0.3,
     keys = {
       quit = 'q',
@@ -66,14 +67,16 @@ local default_config = {
   request_timeout = 2000,
   finder = {
     max_height = 0.5,
-    left_width = 0.3,
-    right_width = 0.5,
+    left_width = 0.4,
     methods = {},
     default = 'ref+imp',
     layout = 'float',
     silent = false,
     filter = {},
+    fname_sub = nil,
     sp_inexist = false,
+    sp_global = false,
+    ly_botright = false,
     keys = {
       shuttle = '[w',
       toggle_or_open = 'o',
@@ -88,11 +91,13 @@ local default_config = {
   definition = {
     width = 0.6,
     height = 0.5,
+    save_pos = false,
     keys = {
       edit = '<C-c>o',
       vsplit = '<C-c>v',
       split = '<C-c>i',
       tabe = '<C-c>t',
+      tabnew = '<C-c>n',
       quit = 'q',
       close = '<C-c>k',
     },
@@ -112,6 +117,7 @@ local default_config = {
     enable = true,
     separator = ' › ',
     hide_keyword = false,
+    ignore_patterns = nil,
     show_file = true,
     folder_level = 1,
     color_mode = true,
@@ -135,6 +141,7 @@ local default_config = {
   },
   callhierarchy = {
     layout = 'float',
+    left_width = 0.2,
     keys = {
       edit = 'e',
       vsplit = 's',
@@ -156,6 +163,10 @@ local default_config = {
   beacon = {
     enable = true,
     frequency = 7,
+  },
+  floaterm = {
+    height = 0.7,
+    width = 0.7,
   },
 }
 

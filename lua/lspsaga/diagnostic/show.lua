@@ -77,6 +77,8 @@ function sd:layout_normal()
       ['modifiable'] = false,
       ['filetype'] = 'sagadiagnostc',
       ['expandtab'] = false,
+      ['bufhidden'] = 'wipe',
+      ['buftype'] = 'nofile',
     })
     :winopt({
       ['number'] = false,
@@ -312,6 +314,7 @@ function sd:show(opt)
   end
 
   local layout = diag_conf.show_layout
+  opt.args = opt.args or {}
   if vim.tbl_contains(opt.args, '++float') then
     layout = 'float'
   elseif vim.tbl_contains(opt.args, '++normal') then
@@ -331,6 +334,11 @@ function sd:show(opt)
 end
 
 function sd:show_diagnostics(opt)
+  local has_jump_win = require('lspsaga.diagnostic').winid
+  if has_jump_win and api.nvim_win_is_valid(has_jump_win) then
+    return
+  end
+
   local entrys = diag:get_diagnostic(opt)
   if next(entrys) == nil then
     return

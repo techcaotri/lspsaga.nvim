@@ -94,6 +94,9 @@ function hover:open_floating_preview(content, option_fn)
     if line:find('^%-%-%-$') then
       line = util.gen_truncate_line(float_option.width)
     end
+    if line:find('\\') then
+      line = line:gsub('\\', '')
+    end
     if #line > 0 then
       new[#new + 1] = line
     end
@@ -191,6 +194,13 @@ function hover:open_floating_preview(content, option_fn)
   util.map_keys(self.bufnr, config.hover.open_link, function()
     self:open_link()
   end)
+
+  api.nvim_create_autocmd('BufWipeout', {
+    buffer = self.bufnr,
+    callback = function()
+      pcall(util.delete_scroll_map, curbuf)
+    end,
+  })
 end
 
 local function ignore_error(args, can_through)
@@ -221,7 +231,7 @@ function hover:do_request(args)
     end
 
     if not result or not result.contents then
-      if ignore_error(args, count == #clients) then
+      if not ignore_error(args, count == #clients) then
         vim.notify('No information available')
       end
       return
@@ -261,7 +271,9 @@ function hover:do_request(args)
     if not client then
       return
     end
-    content[#content + 1] = '`From: ' .. client.name .. '`'
+    if #clients ~= 1 then
+      content[#content + 1] = '`From: ' .. client.name .. '`'
+    end
 
     if
       self.bufnr
@@ -316,6 +328,12 @@ local function check_parser()
 end
 
 function hover:render_hover_doc(args)
+  local diag_winid = require('lspsaga.diagnostic').winid
+  if diag_winid and api.nvim_win_is_valid(diag_winid) then
+    require('lspsaga.diagnostic'):clean_data()
+  end
+  args = args or {}
+
   if not check_parser() then
     vim.notify(
       '[lspsaga] please install markdown and markdown_inline parser in nvim-treesitter',
